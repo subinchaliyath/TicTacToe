@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tic-tac-toet</title>
+    <script src="https://unpkg.com/react@17.0.0/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17.0.0/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.12.4/babel.js"></script>
+  </head>
+  <style>
+    .container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .status {
+      margin-bottom: 10px;
+    }
+
+    .restart {
+      margin-top: 10px;
+      padding: 3px 10px;
+      border: 2px solid #121212;
+      background-color: aliceblue;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .restart:hover {
+      background: #027236;
+      color: #fff;
+    }
+    .restart:active {
+      box-shadow: 0 1px rgb(179, 114, 114);
+      transform: translateY(4px);
+    }
+    .d-flex {
+      display: flex;
+    }
+    .square {
+      background: #fff;
+      border: 2px solid rgb(23, 36, 153);
+      font-size: 24px;
+      font-weight: bold;
+      line-height: 34px;
+      height: 40px;
+      width: 40px;
+      margin-right: -1px;
+      margin-top: -1px;
+      padding: 0;
+      text-align: center;
+    }
+    .X {
+      color: rgb(92, 189, 92);
+    }
+    .O {
+      color: rgb(209, 87, 87);
+    }
+    .square:focus {
+      outline: none;
+      background: #ddd;
+    }
+    .modal {
+      display: block;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgb(0, 0, 0);
+      background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    /* Modal Content/Box */
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto; /* 15% from the top and centered */
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 400px;
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
+      align-items: center;
+    }
+  </style>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      function Board() {
+        const [squares, setSquares] = React.useState(Array(9).fill(null));
+
+        const nextValue = calculateNextValue(squares);
+        const winner = calculateWinner(squares);
+        const status = calculateStatus(winner, squares, nextValue);
+
+        function selectSquare(square) {
+          if (winner || squares[square]) {
+            return;
+          }
+          const squaresCopy = [...squares];
+          squaresCopy[square] = nextValue;
+          setSquares(squaresCopy);
+        }
+
+        function restart() {
+          setSquares(Array(9).fill(null));
+        }
+
+        function renderSquare(i) {
+          return (
+            <button
+              className={`square ${squares[i]}`}
+              onClick={() => selectSquare(i)}
+            >
+              {squares[i]}
+            </button>
+          );
+        }
+
+        return (
+          <div className="container">
+            {winner ? (
+              <div className="modal">
+                <div className="modal-content">
+                  <div>{winner} won the game!!!</div>
+                  <button className="restart" onClick={restart}>
+                    RESTART
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className={`status ${nextValue}`}>{status}</div>
+            )}
+
+            <div className="d-flex">
+              {renderSquare(0)}
+              {renderSquare(1)}
+              {renderSquare(2)}
+            </div>
+            <div className="d-flex">
+              {renderSquare(3)}
+              {renderSquare(4)}
+              {renderSquare(5)}
+            </div>
+            <div className="d-flex">
+              {renderSquare(6)}
+              {renderSquare(7)}
+              {renderSquare(8)}
+            </div>
+            <button className="restart" onClick={restart}>
+              RESTART
+            </button>
+          </div>
+        );
+      }
+
+      function calculateStatus(winner, squares, nextValue) {
+        return winner
+          ? true
+          : squares.every(Boolean)
+          ? `Scratch: Cat's game`
+          : `Next player: ${nextValue}`;
+      }
+
+      function calculateNextValue(squares) {
+        return squares.filter(Boolean).length % 2 === 0 ? "X" : "O";
+      }
+
+      function calculateWinner(squares) {
+        const lines = [
+          [0, 1, 2],
+          [3, 4, 5],
+          [6, 7, 8],
+          [0, 3, 6],
+          [1, 4, 7],
+          [2, 5, 8],
+          [0, 4, 8],
+          [2, 4, 6],
+        ];
+        for (let i = 0; i < lines.length; i++) {
+          const [a, b, c] = lines[i];
+          if (
+            squares[a] &&
+            squares[a] === squares[b] &&
+            squares[a] === squares[c]
+          ) {
+            return squares[a];
+          }
+        }
+        return null;
+      }
+
+      ReactDOM.render(<Board />, document.getElementById("root"));
+    </script>
+  </body>
+</html>
