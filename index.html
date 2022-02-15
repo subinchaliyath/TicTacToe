@@ -16,16 +16,19 @@
       justify-content: center;
       align-items: center;
     }
+    .game {
+      display: flex;
+      justify-content: center;
+    }
     .status {
-      margin-bottom: 10px;
+      margin: 10px 0;
     }
 
-    .restart {
-      margin-top: 10px;
-      padding: 3px 10px;
+    .game-restart {
+      padding: 4px 10px;
       border: 2px solid #121212;
       background-color: aliceblue;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
     }
     .restart:hover {
@@ -51,6 +54,9 @@
       margin-top: -1px;
       padding: 0;
       text-align: center;
+    }
+    .win {
+      margin: 10px 0;
     }
     .X {
       color: rgb(92, 189, 92);
@@ -88,6 +94,18 @@
       flex-direction: column;
       align-items: center;
     }
+    .game-li {
+      margin-bottom: 8px;
+    }
+    .btn-move {
+      padding: 3px 6px;
+      background-color: black;
+      color: #fff;
+      border-radius: 5px;
+    }
+    .current {
+      background-color: rgb(24, 163, 48);
+    }
   </style>
   <body>
     <div id="root"></div>
@@ -121,34 +139,12 @@
         return [state, setState];
       }
 
-      function Board() {
-        const [squares, setSquares] = useLocalStorageState(
-          "squares",
-          Array(9).fill(null)
-        );
-
-        const nextValue = calculateNextValue(squares);
-        const winner = calculateWinner(squares);
-        const status = calculateStatus(winner, squares, nextValue);
-
-        function selectSquare(square) {
-          if (winner || squares[square]) {
-            return;
-          }
-          const squaresCopy = [...squares];
-          squaresCopy[square] = nextValue;
-          setSquares(squaresCopy);
-        }
-
-        function restart() {
-          setSquares(Array(9).fill(null));
-        }
-
+      function Board({ onClick, squares }) {
         function renderSquare(i) {
           return (
             <button
               className={`square ${squares[i]}`}
-              onClick={() => selectSquare(i)}
+              onClick={() => onClick(i)}
             >
               {squares[i]}
             </button>
@@ -157,19 +153,6 @@
 
         return (
           <div className="container">
-            {winner ? (
-              <div className="modal">
-                <div className="modal-content">
-                  <div>{winner} won the game!!!</div>
-                  <button className="restart" onClick={restart}>
-                    RESTART
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className={`status ${nextValue}`}>{status}</div>
-            )}
-
             <div className="d-flex">
               {renderSquare(0)}
               {renderSquare(1)}
@@ -185,13 +168,85 @@
               {renderSquare(7)}
               {renderSquare(8)}
             </div>
-            <button className="restart" onClick={restart}>
-              RESTART
-            </button>
           </div>
         );
       }
 
+      function Game() {
+        const [currentStep, setCurrentStep] = React.useState(0);
+        const [history, setHistory] = React.useState([Array(9).fill(null)]);
+        const currentSquares = history[currentStep];
+
+        const nextValue = calculateNextValue(currentSquares);
+        const winner = calculateWinner(currentSquares);
+        const status = calculateStatus(winner, currentSquares, nextValue);
+
+        const gotoMoves = (step, isCurrent) => {
+          !isCurrent && setCurrentStep(step);
+        };
+        const moves = history.map((currentSquares, step) => {
+          const descr = step === 0 ? "First move" : `Move ${step}`;
+          const isCurrent = step === currentStep;
+          return (
+            <li key={descr} className="game-li">
+              <button
+                className={`btn-move ${isCurrent && "current"}`}
+                onClick={() => gotoMoves(step, isCurrent)}
+              >
+                {descr}
+              </button>
+            </li>
+          );
+        });
+
+        function selectSquare(square) {
+          if (winner || currentSquares[square]) {
+            return;
+          }
+          const newHistory = history.slice(0, currentStep + 1);
+          const squaresCopy = [...currentSquares];
+          squaresCopy[square] = nextValue;
+          setHistory([...newHistory, squaresCopy]);
+          setCurrentStep(newHistory.length);
+        }
+
+        function restart() {
+          setHistory([Array(9).fill(null)]);
+          setCurrentStep(0);
+        }
+        return (
+          <div className="container">
+            <h3>Tic Tac Toe</h3>
+            <p>{`${
+              currentStep === 0 ? "Start game by interacting on squares" : ""
+            }`}</p>
+            <div className="game">
+              {winner && (
+                <div className="modal">
+                  <div className="modal-content">
+                    <div className={`win ${winner === "X" ? "X" : "O"}`}>
+                      {winner} won the game 🥳🥳
+                    </div>
+                    <button className="game-restart" onClick={restart}>
+                      RESTART
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div className="game-area">
+                <Board onClick={selectSquare} squares={currentSquares} />
+                <div className={`status ${nextValue}`}>{status}</div>
+                <button className="game-restart" onClick={restart}>
+                  RESTART
+                </button>
+              </div>
+              <div className="game-history">
+                <ol style={{ listStyleType: "none" }}>{moves}</ol>
+              </div>
+            </div>
+          </div>
+        );
+      }
       function calculateStatus(winner, squares, nextValue) {
         return winner
           ? true
@@ -228,7 +283,7 @@
         return null;
       }
       // todo history
-      ReactDOM.render(<Board />, document.getElementById("root"));
+      ReactDOM.render(<Game />, document.getElementById("root"));
     </script>
   </body>
 </html>
